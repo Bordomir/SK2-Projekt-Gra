@@ -1,8 +1,7 @@
 #include <iostream>
 
 int main(int, char**){
-    int temp;
-    std::cout << "Hello, from Serwer!123456\n";
+    std::cout << "Hello, from Serwer!\n";
 
 
     return 0;
