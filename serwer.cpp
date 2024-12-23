@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <errno.h>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <map>
@@ -14,18 +15,22 @@
 #include <arpa/inet.h>
 #include <sys/epoll.h>
 
+#define PORT 8080
+#define BUFFER_SIZE 255
+
+
 int setupAllWriteBuffers(std::string &message, std::vector<int> &clients, int clientCount, std::map<int, std::string> &writerBuffers, int epollFD);
 
 int createEpoll(int serverSocket);
 
 int createSerwer(int port);
 
-int main(int argc, char** argv){
-    int port = atoi(getenv("PORT"));
-    int bufferSize = atoi(getenv("BUFFER_SIZE"));
+int main(){
+    // int port = atoi(getenv("PORT"));
+    // int bufferSize = atoi(getenv("BUFFER_SIZE"));
 
 
-    int serverSocket = createSerwer(port);
+    int serverSocket = createSerwer(PORT);
     if(serverSocket < 0){
         perror("createSerwer"); 
         return 1;
@@ -54,7 +59,7 @@ int main(int argc, char** argv){
     epoll_event ee;
     int returnValue;
     std::string message = "";
-    char buff[bufferSize];
+    char buff[BUFFER_SIZE];
     while(true){
         returnValue = epoll_wait(epollFD, &ee, 1, -1);
         if(returnValue < 0){
@@ -64,7 +69,6 @@ int main(int argc, char** argv){
 
         if(ee.data.fd == serverSocket){
             // New client
-
             clientSocket = accept(serverSocket, (sockaddr*)&clientAddres, &clientAddresSize);
             if(clientSocket < 0){
                 perror("accept"); 
@@ -83,6 +87,8 @@ int main(int argc, char** argv){
                 perror("accept"); 
                 return 1;
             }
+
+            printf("Client connected.\n");
         }else if(ee.events == EPOLLIN){
             // Message from client
 
@@ -144,7 +150,11 @@ int createSerwer(int port){
         return -1;
     }
 
-    sockaddr_in serverAddres = {AF_INET, htons(port), {htonl(INADDR_ANY)}};
+    sockaddr_in serverAddres;
+    memset(&serverAddres, 0, sizeof(serverAddres));
+    serverAddres.sin_family = AF_INET;
+    serverAddres.sin_port = htons(port);
+    serverAddres.sin_addr.s_addr = htonl(INADDR_ANY);
     socklen_t serverAddresSize = sizeof serverAddres;
     returnValue = bind(serverSocket, (sockaddr*)&serverAddres, serverAddresSize);
     if(returnValue < 0){
