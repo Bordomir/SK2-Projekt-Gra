@@ -5,6 +5,6 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 set(CMAKE_CXX_STANDARD 17)
 
-set(COMPILE_FLAGS "-Wall -Wextra -Wpedantic")
+add_compile_options(-Wall -Wextra -Wpedantic)
 
 add_executable(Serwer main.cpp)
