@@ -21,6 +21,8 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 # message($ENV{PORT})
 # message($ENV{BUFFER_SIZE})
 
+cmake_policy(SET CMP0135 NEW)
+
 include(FetchContent)
 
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)

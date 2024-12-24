@@ -15,22 +15,21 @@
 #include <arpa/inet.h>
 #include <sys/epoll.h>
 
+#include "build/_deps/json-src/single_include/nlohmann/json.hpp"
+
 #define PORT 8080
 #define BUFFER_SIZE 255
 
+using json = nlohmann::json;
+using namespace nlohmann::literals;
 
 int setupAllWriteBuffers(std::string &message, std::vector<int> &clients, int clientCount, std::map<int, std::string> &writerBuffers, int epollFD);
-
-std::string serialize(){
-    
-}
 
 int createEpoll(int serverSocket);
 
 int createSerwer(int port);
 
 int main(){
-
 
     int serverSocket = createSerwer(PORT);
     if(serverSocket < 0){
