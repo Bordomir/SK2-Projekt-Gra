@@ -21,13 +21,15 @@
 
 int setupAllWriteBuffers(std::string &message, std::vector<int> &clients, int clientCount, std::map<int, std::string> &writerBuffers, int epollFD);
 
+std::string serialize(){
+    
+}
+
 int createEpoll(int serverSocket);
 
 int createSerwer(int port);
 
 int main(){
-    // int port = atoi(getenv("PORT"));
-    // int bufferSize = atoi(getenv("BUFFER_SIZE"));
 
 
     int serverSocket = createSerwer(PORT);
@@ -42,6 +44,7 @@ int main(){
         return 1;
     }
 
+    // Client Socket variables 
     sockaddr_in clientAddres;
     socklen_t clientAddresSize = sizeof clientAddres;
     int clientSocket;
@@ -50,12 +53,13 @@ int main(){
     std::map<int, std::string> writeBuffers;
     int clientsCount = 0;
 
+    // Game variables
     int playerCount = 0;
     std::map<int, std::string> names;
     std::map<int, int> points;
     bool ifGameRunning = false;
 
-
+    // Reading variables
     epoll_event ee;
     int returnValue;
     std::string message = "";
