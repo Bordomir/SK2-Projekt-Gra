@@ -26,80 +26,6 @@
    <string>Gra państwa miasta</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QTableWidget" name="odpowiedzi">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>440</y>
-      <width>681</width>
-      <height>61</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LayoutDirection::LeftToRight</enum>
-    </property>
-    <row>
-     <property name="text">
-      <string>Odpowiedź</string>
-     </property>
-    </row>
-    <column>
-     <property name="text">
-      <string>Miasto</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>Państwo</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>Nowa kolumna</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>Przedmiot</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>Zawód</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>Zwierzę</string>
-     </property>
-    </column>
-   </widget>
-   <widget class="QPushButton" name="odpowiedz">
-    <property name="geometry">
-     <rect>
-      <x>330</x>
-      <y>510</y>
-      <width>131</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Prześlij odpowiedzi</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>10</y>
-      <width>81</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Nazwa Gracza</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
@@ -113,30 +39,7 @@
      <string>Lista Graczy i punktacja</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="nazwaGracza">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>30</y>
-      <width>113</width>
-      <height>24</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="start">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>60</y>
-      <width>91</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Dołącz do gry</string>
-    </property>
-   </widget>
-   <widget class="QTableView" name="tabelaWynikow">
+   <widget class="QTableView" name="playerTable">
     <property name="geometry">
      <rect>
       <x>530</x>
@@ -158,7 +61,10 @@
     <property name="title">
      <string>Informacje o aktualnej rundzie</string>
     </property>
-    <widget class="QLineEdit" name="litera">
+    <widget class="QLineEdit" name="signLine">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>100</x>
@@ -166,6 +72,9 @@
        <width>31</width>
        <height>31</height>
       </rect>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
      </property>
     </widget>
     <widget class="QLabel" name="label_3">
@@ -194,7 +103,10 @@
       <string>Liczba wszystkich graczy</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="calkowitaLiczbaGraczy">
+    <widget class="QLineEdit" name="allPlayersLine">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>160</x>
@@ -203,8 +115,14 @@
        <height>31</height>
       </rect>
      </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
     </widget>
-    <widget class="QLineEdit" name="konczoncaLiczbaGraczy">
+    <widget class="QLineEdit" name="requiredPlayersLine">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>160</x>
@@ -213,8 +131,14 @@
        <height>31</height>
       </rect>
      </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
     </widget>
-    <widget class="QLineEdit" name="odeslanaLiczbaGraczy">
+    <widget class="QLineEdit" name="currentPlayersLine">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>160</x>
@@ -222,6 +146,9 @@
        <width>131</width>
        <height>31</height>
       </rect>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
      </property>
     </widget>
     <widget class="QLabel" name="label_5">
@@ -257,11 +184,11 @@
      </property>
     </widget>
    </widget>
-   <widget class="QTextBrowser" name="komunikaty">
+   <widget class="QTextBrowser" name="serwerMessages">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>230</y>
+      <y>260</y>
       <width>771</width>
       <height>192</height>
      </rect>
@@ -270,8 +197,8 @@
    <widget class="QLabel" name="label_7">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>210</y>
+      <x>320</x>
+      <y>240</y>
       <width>171</width>
       <height>16</height>
      </rect>
@@ -280,17 +207,200 @@
      <string>Komunikaty od serwera</string>
     </property>
    </widget>
-  </widget>
-  <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>800</width>
-     <height>21</height>
-    </rect>
-   </property>
+   <widget class="QPushButton" name="disconnectButton">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>120</y>
+      <width>111</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Rozłącz z serwerem</string>
+    </property>
+   </widget>
+   <widget class="QGroupBox" name="connectBox">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>191</width>
+      <height>101</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Połączenie z serwerem</string>
+    </property>
+    <widget class="QLabel" name="label_8">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>81</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>IP serwera</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="serwerIP">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>40</y>
+       <width>113</width>
+       <height>24</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="connectButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>70</y>
+       <width>111</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Połącz z serwerem</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="joinBox">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>150</y>
+      <width>191</width>
+      <height>101</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Dołączenie do gry</string>
+    </property>
+    <widget class="QPushButton" name="joinButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>70</y>
+       <width>91</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Dołącz do gry</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="playerName">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>40</y>
+       <width>113</width>
+       <height>24</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>81</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Nazwa Gracza</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="gameBox">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>450</y>
+      <width>771</width>
+      <height>141</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Gra</string>
+    </property>
+    <widget class="QPushButton" name="sendButton">
+     <property name="geometry">
+      <rect>
+       <x>320</x>
+       <y>110</y>
+       <width>131</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Prześlij odpowiedzi</string>
+     </property>
+    </widget>
+    <widget class="QTableWidget" name="playerAnswersTable">
+     <property name="geometry">
+      <rect>
+       <x>40</x>
+       <y>40</y>
+       <width>681</width>
+       <height>61</height>
+      </rect>
+     </property>
+     <property name="layoutDirection">
+      <enum>Qt::LayoutDirection::LeftToRight</enum>
+     </property>
+     <row>
+      <property name="text">
+       <string>Odpowiedź</string>
+      </property>
+     </row>
+     <column>
+      <property name="text">
+       <string>Miasto</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Państwo</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Nowa kolumna</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Przedmiot</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Zawód</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Zwierzę</string>
+      </property>
+     </column>
+    </widget>
+   </widget>
   </widget>
  </widget>
  <resources/>

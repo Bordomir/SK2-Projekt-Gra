@@ -16,19 +16,19 @@
 #include <sys/epoll.h>
 
 #include "nlohmann/json.hpp"
-
-#define PORT 8080
-#define BUFFER_SIZE 255
+#include "config.hpp"
 
 using json = nlohmann::json;
 using namespace nlohmann::literals;
 
 int setupAllWriteBuffers(std::string &message, std::vector<int> &clients, int clientCount, std::map<int, std::string> &writerBuffers, int epollFD);
-
+bool checkIfMessageReady(int clientSocket, json &dataJSON, std::map<int, std::string> &readBuffers);
+int checkWriteBuffer(int clientSocket, std::map<int, std::string> &writeBuffers, int epollFD);
+int writeToSocket(int clientSocket, std::map<int, std::string> &writeBuffers, int epollFD);
+std::string readFromSocket(int clientSocket);
+int disconnectClient(int clientSocket, std::vector<int> &clients, int &clientsCount, std::map<int, std::string> &readBuffers, std::map<int, std::string> &writeBuffers, int epollFD);
 int connectNewClient(int serverSocket, std::vector<int> &clients, int &clientsCount, std::map<int, std::string> &readBuffers, std::map<int, std::string> &writeBuffers, int epollFD);
-
 int createEpoll(int serverSocket);
-
 int createSerwer(int port);
 
 int main(){
@@ -46,7 +46,7 @@ int main(){
     std::map<int, std::string> readBuffers;
     std::map<int, std::string> writeBuffers;
     std::string message = "";
-    char buff[BUFFER_SIZE];
+    json dataJSON;
 
     // Game variables
     // int playerCount = 0;
@@ -68,116 +68,40 @@ int main(){
             // New client
             returnValue = connectNewClient(serverSocket, clients, clientsCount, readBuffers, writeBuffers, epollFD);
             if(returnValue < 0) return 1;
+
         }else if(ee.events & EPOLLIN){
-            memset(buff, 0, BUFFER_SIZE);
-            returnValue = read(ee.data.fd, &buff, BUFFER_SIZE);
-            if(returnValue < 0){
-                perror("read"); 
-                return 1;
-            }
+            // New message from client
+            message = readFromSocket(ee.data.fd);
+            if(message == "-1") return 1;
 
-            message = buff;
-            message = message.substr(0,returnValue);
-            if(message[message.length()-1] == '\n'){
-                message = message.substr(0,message.length()-1);
-            }
-
-            if(message == "exit" || message == ""){
-                // Client disconnects
-                for(int i = 0; i < clientsCount; i++){
-                    if(clients[i] == ee.data.fd){
-                        clients.erase(clients.begin() + i);
-                        break;
-                    }
-                }
-                readBuffers[ee.data.fd] = "";
-                writeBuffers[ee.data.fd] = "";
-                clientsCount--;
-
-                returnValue = epoll_ctl(epollFD, EPOLL_CTL_DEL, ee.data.fd, NULL);
-                if(returnValue < 0){
-                    perror("epoll_ctl"); 
-                    return 1;
-                }
-
-                returnValue = close(ee.data.fd);
-                if(returnValue < 0){
-                    perror("close"); 
-                    return 1;
-                }
-
-                // Debug info
-                printf("Client on descriptor:%d has disconnected\n", ee.data.fd);
-            }else{
-                // Message from client
-
-                // Debug info
-                printf("New message from client on descriptor:%d:%s\n", ee.data.fd, message.data());
-
-                readBuffers[ee.data.fd] += message;
-
-                // Check if entire message has been received
-                int pos = readBuffers[ee.data.fd].find("$");
-                while(pos > -1){
-                    std::string data = readBuffers[ee.data.fd].substr(0, pos);
-                    readBuffers[ee.data.fd] = readBuffers[ee.data.fd].substr(pos+1);
-
-                    // Debug info
-                    printf("New data from client on descriptor:%d:%s\n", ee.data.fd, data.data());
-                    printf("The rest on readBuffers[%d]:%s\n", ee.data.fd, readBuffers[ee.data.fd].data());
-
-                    // Data service
-                    // TODO
-                    json dataJSON = json::parse(data);
-                    printf("Json object in data:%s\n", dataJSON.dump().data());
-
-                    std::string temp = "";
-                    char temp2[1024];
-                    sprintf(temp2, "Message from client on descriptor:%d:\n%s$\n", ee.data.fd, dataJSON.dump().data());
-                    temp = temp2;
-                    returnValue = setupAllWriteBuffers(temp, clients, clientsCount, writeBuffers, epollFD);
-                    if (returnValue < 0) return 1;
-                    
-                    pos = readBuffers[ee.data.fd].find("$");
-                }
-            }
-
-        }else if(ee.events & EPOLLOUT){
-            // Message to client
-
-            if(writeBuffers[ee.data.fd] == ""){
-                ee.events = EPOLLIN;
-                returnValue = epoll_ctl(epollFD, EPOLL_CTL_MOD, ee.data.fd, &ee);
-                if(returnValue < 0){
-                    perror("epoll_ctl"); 
-                    return 1;
-                }
-                continue;
-            }
-
-            message = writeBuffers[ee.data.fd];
-
-            returnValue = write(ee.data.fd, message.data(), message.size());
-            if(returnValue < 0){
-                perror("write"); 
-                return 1;
-            }
-
-            // Debug info
-            printf("Message sent to client on descriptor:%d:%s\n", ee.data.fd, message.substr(0, returnValue).data());
-
-            message = message.substr(returnValue);
-            writeBuffers[ee.data.fd] = message;
-
-            // Check if no more messages are to be send
+            // Check if connection was lost
             if(message == ""){
-                ee.events = EPOLLIN;
-                returnValue = epoll_ctl(epollFD, EPOLL_CTL_MOD, ee.data.fd, &ee);
-                if(returnValue < 0){
-                    perror("epoll_ctl"); 
-                    return 1;
-                }
+                returnValue = disconnectClient(ee.data.fd, clients, clientsCount, readBuffers, writeBuffers, epollFD);
+                if(returnValue < 0) return 1;
+                continue;   
             }
+            // Debug info
+            printf("New message from client on descriptor:%d:%s\n", ee.data.fd, message.data());
+
+            readBuffers[ee.data.fd] += message;
+
+            while(checkIfMessageReady(ee.data.fd, dataJSON, readBuffers)){
+                // Data Service 
+                // TODO
+
+                // Debug info
+                printf("Json object in data:%s\n", dataJSON.dump().data());
+
+                std::string temp = "";
+                char temp2[1024];
+                sprintf(temp2, "Message from client on descriptor:%d:\n%s$\n", ee.data.fd, dataJSON.dump().data());
+                temp = temp2;
+                returnValue = setupAllWriteBuffers(temp, clients, clientsCount, writeBuffers, epollFD);
+                if (returnValue < 0) return 1;
+            }
+        }else if(ee.events & EPOLLOUT){
+            returnValue = writeToSocket(ee.data.fd, writeBuffers, epollFD);
+            if(returnValue < 0) return -1;
         }
     }
 }
@@ -198,6 +122,110 @@ int setupAllWriteBuffers(std::string &message, std::vector<int> &clients, int cl
         }
         writeBuffers[clients[i]] += message;
     }
+    return 0;
+}
+
+bool checkIfMessageReady(int clientSocket, json &dataJSON, std::map<int, std::string> &readBuffers){
+    int pos = readBuffers[clientSocket].find("$");
+    bool ifReady = (pos > -1);
+
+    if(ifReady){
+        std::string data = readBuffers[clientSocket].substr(0, pos);
+        readBuffers[clientSocket] = readBuffers[clientSocket].substr(pos+1);
+
+        // Debug info
+        printf("New data from client on descriptor:%d:%s\n", clientSocket, data.data());
+        printf("The rest on readBuffers[%d]:%s\n", clientSocket, readBuffers[clientSocket].data());
+
+        dataJSON = json::parse(data);
+        return true;        
+    }
+    return false;
+}
+
+int checkWriteBuffer(int clientSocket, std::map<int, std::string> &writeBuffers, int epollFD){
+    if(writeBuffers[clientSocket] == ""){
+        epoll_event ee;
+        ee.events = EPOLLIN;
+        ee.data.fd = clientSocket;
+        int returnValue = epoll_ctl(epollFD, EPOLL_CTL_MOD, clientSocket, &ee);
+        if(returnValue < 0){
+            perror("epoll_ctl"); 
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int writeToSocket(int clientSocket, std::map<int, std::string> &writeBuffers, int epollFD){
+    // Check if buffer is empty (no messages to be sent)
+    int returnValue = checkWriteBuffer(clientSocket, writeBuffers, epollFD);
+    if(returnValue < 0) return -1;
+
+    std::string message = writeBuffers[clientSocket];
+
+    returnValue = write(clientSocket, message.substr(0,BUFFER_SIZE).data(), message.substr(0,BUFFER_SIZE).size());
+    if(returnValue < 0){
+        perror("write"); 
+        return 1;
+    }
+
+    // Debug info
+    printf("Message sent to client on descriptor:%d:%s\n", clientSocket, message.substr(0, returnValue).data());
+
+    message = message.substr(returnValue);
+    writeBuffers[clientSocket] = message;
+    
+    // Check if buffer is empty (no messages to be sent)
+    returnValue = checkWriteBuffer(clientSocket, writeBuffers, epollFD);
+    if(returnValue < 0) return -1;
+
+    return 0;
+}
+
+std::string readFromSocket(int clientSocket){
+    char buff[BUFFER_SIZE+1];
+    memset(buff, 0, BUFFER_SIZE);
+    int length = read(clientSocket, &buff, BUFFER_SIZE);
+    if(length < 0){
+        perror("read"); 
+        return "-1";
+    }
+
+    std::string message = buff;
+    message = message.substr(0, length);
+    if(message[message.length()-1] == '\n'){
+        message = message.substr(0,message.length()-1);
+    }
+
+    return message;
+}
+
+int disconnectClient(int clientSocket, std::vector<int> &clients, int &clientsCount, std::map<int, std::string> &readBuffers, std::map<int, std::string> &writeBuffers, int epollFD){
+    for(int i = 0; i < clientsCount; i++){
+        if(clients[i] == clientSocket){
+            clients.erase(clients.begin() + i);
+            break;
+        }
+    }
+    readBuffers[clientSocket] = "";
+    writeBuffers[clientSocket] = "";
+    clientsCount--;
+
+    int returnValue = epoll_ctl(epollFD, EPOLL_CTL_DEL, clientSocket, NULL);
+    if(returnValue < 0){
+        perror("epoll_ctl"); 
+        return -1;
+    }
+
+    returnValue = close(clientSocket);
+    if(returnValue < 0){
+        perror("close"); 
+        return -1;
+    }
+
+    // Debug info
+    printf("Client on descriptor:%d has disconnected\n", clientSocket);
     return 0;
 }
 

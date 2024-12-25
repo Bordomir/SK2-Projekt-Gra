@@ -9,25 +9,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_compile_options(-Wall -Wextra -Wpedantic)
 
-# file(STRINGS ${CMAKE_HOME_DIRECTORY}/config.env ENV_FILE)
-# foreach(VAR ${ENV_FILE})
-#     string(REGEX MATCH "^[^=]*" KEY ${VAR})
-#     string(REGEX REPLACE "^[^=]*=" "" VALUE ${VAR})
-#     set(ENV{${KEY}} ${VALUE})
-# endforeach()
-
-# set(ENV{PORT} 8080)
-
-# message($ENV{PORT})
-# message($ENV{BUFFER_SIZE})
-
 cmake_policy(SET CMP0135 NEW)
+
+set(PROJECT_SOURCES
+        serwer.cpp
+        config.hpp
+)
 
 include(FetchContent)
 
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
 FetchContent_MakeAvailable(json)
 
-add_executable(Serwer serwer.cpp)
+add_executable(Serwer ${PROJECT_SOURCES})
 
 target_link_libraries(Serwer PRIVATE nlohmann_json::nlohmann_json)
