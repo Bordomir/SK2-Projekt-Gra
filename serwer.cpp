@@ -91,12 +91,8 @@ int main(){
 
                 // Debug info
                 printf("Json object in data:%s\n", dataJSON.dump().data());
-
-                std::string temp = "";
-                char temp2[1024];
-                sprintf(temp2, "Message from client on descriptor:%d:\n%s$\n", ee.data.fd, dataJSON.dump().data());
-                temp = temp2;
-                returnValue = setupAllWriteBuffers(temp, clients, clientsCount, writeBuffers, epollFD);
+                std::string txt = dataJSON.dump();
+                returnValue = setupAllWriteBuffers(txt, clients, clientsCount, writeBuffers, epollFD);
                 if (returnValue < 0) return 1;
             }
         }else if(ee.events & EPOLLOUT){
@@ -121,6 +117,7 @@ int setupAllWriteBuffers(std::string &message, std::vector<int> &clients, int cl
 
         }
         writeBuffers[clients[i]] += message;
+        writeBuffers[clients[i]] += "$";
     }
     return 0;
 }

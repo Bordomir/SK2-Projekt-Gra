@@ -19,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
     connTimeoutTimer->setSingleShot(true);
 
     connect(ui->connectButton, &QPushButton::clicked, this, &MainWindow::connectBtnHit);
+    connect(ui->disconnectButton, &QPushButton::clicked, this, &MainWindow::socketDisconnected);
     connect(ui->joinButton, &QPushButton::clicked, this, &MainWindow::joinBtnHit);
     connect(ui->sendButton, &QPushButton::clicked, this, &MainWindow::sendBtnHit);
 }
@@ -35,6 +36,9 @@ void MainWindow::connTimedOut(){
 
     connTimeoutTimer->disconnect();
     ui->connectBox->setEnabled(true);
+    ui->disconnectButton->setEnabled(false);
+    ui->joinBox->setEnabled(false);
+    ui->gameBox->setEnabled(false);
     ui->serwerMessages->append("<b>Połączenie trwało za długo</b>");
     QMessageBox::critical(this, "Error", "Połączenie trwało za długo");
 }
@@ -45,6 +49,7 @@ void MainWindow::socketConnected(){
     ui->serwerMessages->append("<b>Połączono</b>");
 
     ui->joinBox->setEnabled(true);
+    ui->disconnectButton->setEnabled(true);
 }
 
 void MainWindow::socketDisconnected(){
@@ -52,7 +57,9 @@ void MainWindow::socketDisconnected(){
     socket->disconnect();
 
     ui->connectBox->setEnabled(true);
+    ui->disconnectButton->setEnabled(false);
     ui->joinBox->setEnabled(false);
+    ui->gameBox->setEnabled(false);
 }
 
 void MainWindow::socketError(){
@@ -60,7 +67,9 @@ void MainWindow::socketError(){
     socket->abort();
 
     ui->connectBox->setEnabled(true);
+    ui->disconnectButton->setEnabled(false);
     ui->joinBox->setEnabled(false);
+    ui->gameBox->setEnabled(false);
 }
 
 void MainWindow::socketDataRec(){
@@ -97,8 +106,8 @@ void MainWindow::connectBtnHit(){
 
 void MainWindow::joinBtnHit(){
     std::string name = ui->playerName->text().trimmed().toStdString();
-
-    if(name.find("$") > -1){
+    int pos = name.find("$");
+    if(pos > -1){
         ui->serwerMessages->append("<b>Podana nazwa gracza ma niedopuszczalny znak '$'</b>");
         return;
     }
@@ -107,7 +116,10 @@ void MainWindow::joinBtnHit(){
     dataJSON["type"] = "name";
     dataJSON["name"] = name;
 
-    socket->write(dataJSON.dump().data());
+    std::string message = "";
+    message += dataJSON.dump().data();
+    message += "$";
+    socket->write(message.c_str());
 
     ui->serwerMessages->append("<b>Wysłano nazwę gracza do serwera</b>");
 }
@@ -125,7 +137,10 @@ void MainWindow::sendBtnHit(){
     }
 
 
-    socket->write(dataJSON.dump().data());
+    std::string message = "";
+    message += dataJSON.dump().data();
+    message += "$";
+    socket->write(message.c_str());
 
     ui->serwerMessages->append("<b>Wysłano odpowiedzi gracza do serwera</b>");
 
