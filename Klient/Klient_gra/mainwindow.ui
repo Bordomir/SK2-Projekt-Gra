@@ -371,32 +371,32 @@
      </row>
      <column>
       <property name="text">
-       <string>Miasto</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
        <string>Państwo</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>Nowa kolumna</string>
+       <string>Miasto</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>Przedmiot</string>
+       <string>Rzecz</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>Zawód</string>
+       <string>Roślina</string>
       </property>
      </column>
      <column>
       <property name="text">
        <string>Zwierzę</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Imię</string>
       </property>
      </column>
     </widget>

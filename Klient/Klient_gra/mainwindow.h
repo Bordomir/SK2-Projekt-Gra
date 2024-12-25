@@ -1,10 +1,17 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#pragma once
+
 #include <QMainWindow>
 
 #include <QTcpSocket>
 #include <QTimer>
+#include <string>
+
+#include "nlohmann/json_fwd.hpp"
+
+using json = nlohmann::json;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -24,6 +31,7 @@ protected:
     /* TODO: Dodać zmienną reprezentująca gniazdo - wskaźnik na  QTcpSocket */
     QTcpSocket* socket;
     QTimer *connTimeoutTimer = new QTimer(this);
+    std::string readBuffer = "";
 
     void connTimedOut();
     void socketConnected();
@@ -35,6 +43,7 @@ protected:
     void joinBtnHit();
     void sendBtnHit();
 
+    bool checkIfMessageReady(json &dataJSON);
 private:
     Ui::MainWindow *ui;
 };
