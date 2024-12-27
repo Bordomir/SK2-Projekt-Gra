@@ -136,7 +136,7 @@ void MainWindow::socketDataRec(){
 
 
             ui->playersPointsTable->clearContents();
-            ui->playersPointsTable->setSortingEnabled(false);
+            ui->playersPointsTable->setEnabled(true);
             for(int i = 0; i < all; i++){
                 ui->playersPointsTable->insertRow(i);
                 QTableWidgetItem nameItem;
@@ -152,6 +152,7 @@ void MainWindow::socketDataRec(){
                 ui->playersPointsTable->setItem(i,1, &pointsItem);
                 ui->playersPointsTable->setItem(i,2, &averageItem);
             }
+            // ui->playersPointsTable->setEnabled(false);
 
             roundStartTime = dataJSON["time"];
             minutes = ROUND_TIME;
@@ -245,7 +246,7 @@ void MainWindow::socketDataRec(){
         }else if(dataJSON["type"] == "end"){
             ui->gameBox->setEnabled(false);
             ui->serwerMessages->append("<b>Runda się zakończyła</b>");
-
+            timer->stop();
 
         }else if(dataJSON["type"] == "disconnected"){
             if(!dataJSON.contains("name") || !dataJSON.contains("answers")){
@@ -315,11 +316,25 @@ void MainWindow::sendBtnHit(){
     json dataJSON;
     dataJSON["type"] = "answers";
     for(int i = 0; i < 6; i++){
-        std::string answer = ui->playerAnswersTable->item(0,i)->data(Qt::DisplayRole).toString().toStdString();
-        if(answer.find("$") > -1){
+        QTableWidgetItem *item = ui->playerAnswersTable->item(0,i);
+        if(item == nullptr){
+            dataJSON[categories[i]] = "";
+            continue;
+        }
+        QString Qanswer = item->data(Qt::DisplayRole).toString();
+        if(Qanswer.isEmpty()){
+            dataJSON[categories[i]] = "";
+            continue;
+        }
+        std::string answer = Qanswer.toStdString();
+        int pos = answer.find("$");
+        if(pos > -1){
             answer = "";
         }
         if(answer[0] != letter[0]){
+            answer = "";
+        }
+        if(answer.empty()){
             answer = "";
         }
         dataJSON[categories[i]] = answer;
