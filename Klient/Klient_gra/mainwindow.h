@@ -9,7 +9,7 @@
 #include <QTimer>
 #include <string>
 
-#include "nlohmann/json_fwd.hpp"
+#include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 
@@ -31,7 +31,19 @@ protected:
     /* TODO: Dodać zmienną reprezentująca gniazdo - wskaźnik na  QTcpSocket */
     QTcpSocket* socket;
     QTimer *connTimeoutTimer = new QTimer(this);
+    QTimer *timer = new QTimer(this);
+
+    // Variable used for receiving data from serwer
     std::string readBuffer = "";
+
+    // Game variables
+    std::vector<std::string> categories = {"panstwo","miasto","rzecz","roslina","zwierze","imie"};
+    int playerCount;
+    int playerAnswers;
+    bool ifPlaying;
+    int minutes;
+    int seconds;
+    std::string letter;
 
     void connTimedOut();
     void socketConnected();
@@ -44,6 +56,7 @@ protected:
     void sendBtnHit();
 
     bool checkIfMessageReady(json &dataJSON);
+    void timeChange();
 private:
     Ui::MainWindow *ui;
 };

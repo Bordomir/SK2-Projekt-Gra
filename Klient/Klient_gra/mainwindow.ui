@@ -29,7 +29,7 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>530</x>
+      <x>490</x>
       <y>10</y>
       <width>131</width>
       <height>16</height>
@@ -39,35 +39,28 @@
      <string>Lista Graczy i punktacja</string>
     </property>
    </widget>
-   <widget class="QTableView" name="playerTable">
-    <property name="geometry">
-     <rect>
-      <x>530</x>
-      <y>30</y>
-      <width>256</width>
-      <height>192</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QGroupBox" name="Runda">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
-      <x>209</x>
-      <y>9</y>
+      <x>180</x>
+      <y>10</y>
       <width>301</width>
-      <height>211</height>
+      <height>221</height>
      </rect>
     </property>
     <property name="title">
      <string>Informacje o aktualnej rundzie</string>
     </property>
-    <widget class="QLineEdit" name="signLine">
+    <widget class="QLineEdit" name="letterLine">
      <property name="enabled">
       <bool>false</bool>
      </property>
      <property name="geometry">
       <rect>
-       <x>100</x>
+       <x>110</x>
        <y>150</y>
        <width>31</width>
        <height>31</height>
@@ -183,8 +176,37 @@
       <bool>true</bool>
      </property>
     </widget>
+    <widget class="QLabel" name="label_9">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>190</y>
+       <width>81</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Pozostały czas</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="timeLine">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>162</x>
+       <y>183</y>
+       <width>131</width>
+       <height>31</height>
+      </rect>
+     </property>
+    </widget>
    </widget>
    <widget class="QTextBrowser" name="serwerMessages">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -197,7 +219,7 @@
    <widget class="QLabel" name="label_7">
     <property name="geometry">
      <rect>
-      <x>320</x>
+      <x>280</x>
       <y>240</y>
       <width>171</width>
       <height>16</height>
@@ -228,7 +250,7 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>191</width>
+      <width>161</width>
       <height>101</height>
      </rect>
     </property>
@@ -280,7 +302,7 @@
      <rect>
       <x>10</x>
       <y>150</y>
-      <width>191</width>
+      <width>161</width>
       <height>101</height>
      </rect>
     </property>
@@ -355,14 +377,23 @@
     <widget class="QTableWidget" name="playerAnswersTable">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>40</y>
-       <width>681</width>
-       <height>61</height>
+       <x>10</x>
+       <y>30</y>
+       <width>751</width>
+       <height>81</height>
       </rect>
      </property>
      <property name="layoutDirection">
       <enum>Qt::LayoutDirection::LeftToRight</enum>
+     </property>
+     <property name="verticalScrollBarPolicy">
+      <enum>Qt::ScrollBarPolicy::ScrollBarAsNeeded</enum>
+     </property>
+     <property name="horizontalScrollBarPolicy">
+      <enum>Qt::ScrollBarPolicy::ScrollBarAsNeeded</enum>
+     </property>
+     <property name="sizeAdjustPolicy">
+      <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustIgnored</enum>
      </property>
      <row>
       <property name="text">
@@ -400,6 +431,46 @@
       </property>
      </column>
     </widget>
+   </widget>
+   <widget class="QTableWidget" name="playersPointsTable">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>30</y>
+      <width>301</width>
+      <height>221</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="horizontalScrollBarPolicy">
+     <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+    </property>
+    <attribute name="horizontalHeaderMinimumSectionSize">
+     <number>14</number>
+    </attribute>
+    <column>
+     <property name="text">
+      <string>Nazwa</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Punkty</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Średnia</string>
+     </property>
+    </column>
    </widget>
   </widget>
  </widget>
