@@ -26,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
     minutes = 0;
     seconds = 0;
     letter = "";
+    roundStartTime = 0;
 
     connect(timer, &QTimer::timeout, this, &MainWindow::timeChange);
     connect(ui->connectButton, &QPushButton::clicked, this, &MainWindow::connectBtnHit);
@@ -76,6 +77,7 @@ void MainWindow::socketDisconnected(){
     minutes = 0;
     seconds = 0;
     letter = "";
+    roundStartTime = 0;
 }
 
 void MainWindow::socketError(){
@@ -151,12 +153,12 @@ void MainWindow::socketDataRec(){
                 ui->playersPointsTable->setItem(i,2, &averageItem);
             }
 
+            roundStartTime = dataJSON["time"];
             minutes = ROUND_TIME;
             seconds = 0;
             if(!ifPlaying){
-                time_t startTime = dataJSON["time"];
                 time_t curr = time(NULL);
-                double sec = difftime(curr, startTime);
+                double sec = difftime(curr, roundStartTime);
                 int sec1 = int(sec);
                 while(sec1 > 59){
                     minutes--;
@@ -322,7 +324,7 @@ void MainWindow::sendBtnHit(){
         }
         dataJSON[categories[i]] = answer;
     }
-
+    dataJSON["time"] = roundStartTime;
 
     std::string message = "";
     message += dataJSON.dump().data();
@@ -362,6 +364,7 @@ void MainWindow::timeChange(){
     if(seconds == 0 && minutes == 0){
         json dataJSON;
         dataJSON["type"] = "time";
+        dataJSON["time"] = roundStartTime;
         std::string message = "";
         message += dataJSON.dump().data();
         message += "$";

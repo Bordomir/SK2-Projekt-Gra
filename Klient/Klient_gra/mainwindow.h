@@ -8,6 +8,7 @@
 #include <QTcpSocket>
 #include <QTimer>
 #include <string>
+#include <ctime>
 
 #include <nlohmann/json.hpp>
 
@@ -44,6 +45,7 @@ protected:
     int minutes;
     int seconds;
     std::string letter;
+    time_t roundStartTime;
 
     void connTimedOut();
     void socketConnected();

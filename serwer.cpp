@@ -22,6 +22,9 @@
 using json = nlohmann::json;
 using namespace nlohmann::literals;
 
+int endRound(std::vector<int> &clients, std::map<int, std::string> &names, std::map<int, int> &points, 
+    std::map<int, int> &rounds, std::map<int, bool> &ifPlaying, std::map<int, std::string> &writeBuffers, int epollFD,
+    int &firstPlayer, std::vector<std::string> &categories, std::map<int, json> &answers);
 int calculatePoints(int clientSocket, int firstPlayer, std::vector<int> &clients, std::map<int, std::string> &names, std::vector<std::string> &categories, 
     std::map<int, json> &answers, std::map<int, std::string> &writeBuffers, int epollFD);
 bool checkifUnique(int clientSocket, std::vector<int> &clients, std::string answer, std::string category, std::map<int, json> &answers);
@@ -129,13 +132,22 @@ int main(){
                 eraseData(ee.data.fd, names, points, rounds, ifPlaying, answers);
 
                 if(ifGameRunning && submitedAnswers >= roundEndRequirement){
-                    //TODO check if game ended
+                    returnValue = endRound(clients, names, points, rounds, ifPlaying, writeBuffers, epollFD, firstPlayer, categories, answers);
+                    if(returnValue < 0) return 1;
+
+                    if(playerCount >= MIN_PLAYER_NUMBER){
+                        returnValue = startRound(ifGameRunning, clients, names, points, rounds, ifPlaying, writeBuffers, epollFD, currentLetter,
+                            roundStartTime, roundEndRequirement, submitedAnswers, playerCount, firstPlayer);
+                        if(returnValue < 0) return 1;
+                    }else{
+                        ifGameRunning = false;
+                    }
                 }
 
                 continue;   
             }
             // Debug info
-            printf("New data from client on descriptor:%d:%s\n", ee.data.fd, data.data());
+            // printf("New data from client on descriptor:%d:%s\n", ee.data.fd, data.data());
 
             readBuffers[ee.data.fd] += data;
 
@@ -201,13 +213,14 @@ int main(){
                         || !dataJSON.contains("rzecz")
                         || !dataJSON.contains("roslina")
                         || !dataJSON.contains("zwierze")
-                        || !dataJSON.contains("imie")){
+                        || !dataJSON.contains("imie")
+                        || !dataJSON.contains("time")){
                         fprintf(stderr, "Invalid data was received");
                         continue;
                     }
-                    if(!ifGameRunning){
-                        continue;
-                    }
+                    if(!ifGameRunning) continue;
+                    if(dataJSON["time"] != roundStartTime) continue;
+
                     if(firstPlayer == 0){
                         firstPlayer = ee.data.fd;
                     }
@@ -223,18 +236,8 @@ int main(){
                     if(returnValue < 0) return 1;
                     
                     if(ifGameRunning && submitedAnswers >= roundEndRequirement){
-                        message = R"({
-                                "type": "end"
-                            })"_json;
-                        returnValue = setupAllWriteBuffers(message, clients, writeBuffers, epollFD);
-
-                        for(const int& client: clients){
-                            if(!ifPlaying[client]) continue;
-
-                            points[client] += calculatePoints(ee.data.fd, firstPlayer, clients, names, categories, answers, writeBuffers, epollFD);
-                        }
-
-                        sleep(10);
+                        returnValue = endRound(clients, names, points, rounds, ifPlaying, writeBuffers, epollFD, firstPlayer, categories, answers);
+                        if(returnValue < 0) return 1;
 
                         if(playerCount >= MIN_PLAYER_NUMBER){
                             returnValue = startRound(ifGameRunning, clients, names, points, rounds, ifPlaying, writeBuffers, epollFD, currentLetter,
@@ -245,8 +248,25 @@ int main(){
                         }
                     }
                 }else if(dataJSON["type"] == "time"){
-                    if(!ifGameRunning){
+                    if(!dataJSON.contains("time")){
+                        fprintf(stderr, "Invalid data was received");
                         continue;
+                    }
+                    if(!ifGameRunning) continue;
+                    if(dataJSON["time"] != roundStartTime) continue;
+                    submitedAnswers++;
+                    
+                    if(ifGameRunning && submitedAnswers >= roundEndRequirement){
+                        returnValue = endRound(clients, names, points, rounds, ifPlaying, writeBuffers, epollFD, firstPlayer, categories, answers);
+                        if(returnValue < 0) return 1;
+
+                        if(playerCount >= MIN_PLAYER_NUMBER){
+                            returnValue = startRound(ifGameRunning, clients, names, points, rounds, ifPlaying, writeBuffers, epollFD, currentLetter,
+                                roundStartTime, roundEndRequirement, submitedAnswers, playerCount, firstPlayer);
+                            if(returnValue < 0) return 1;
+                        }else{
+                            ifGameRunning = false;
+                        }
                     }
                 }
 
@@ -262,6 +282,27 @@ int main(){
             if(returnValue < 0) return -1;
         }
     }
+}
+
+int endRound(std::vector<int> &clients, std::map<int, std::string> &names, std::map<int, int> &points, 
+    std::map<int, int> &rounds, std::map<int, bool> &ifPlaying, std::map<int, std::string> &writeBuffers, int epollFD,
+    int &firstPlayer, std::vector<std::string> &categories, std::map<int, json> &answers
+){
+    json message = R"({
+            "type": "end"
+        })"_json;
+    int returnValue = setupAllWriteBuffers(message, clients, writeBuffers, epollFD);
+    if(returnValue < 0) return -1;
+
+    for(const int& client: clients){
+        if(!ifPlaying[client]) continue;
+
+        points[client] += calculatePoints(client, firstPlayer, clients, names, categories, answers, writeBuffers, epollFD);
+        rounds[client]++;
+    }
+
+    sleep(10);
+    return 0;
 }
 
 int calculatePoints(int clientSocket, int firstPlayer, std::vector<int> &clients, std::map<int, std::string> &names, std::vector<std::string> &categories, 
@@ -442,8 +483,8 @@ bool checkIfMessageReady(int clientSocket, json &dataJSON, std::map<int, std::st
         readBuffers[clientSocket] = readBuffers[clientSocket].substr(pos+1);
 
         // Debug info
-        printf("New data from client on descriptor:%d:%s\n", clientSocket, data.data());
-        printf("The rest on readBuffers[%d]:%s\n", clientSocket, readBuffers[clientSocket].data());
+        // printf("New data from client on descriptor:%d:%s\n", clientSocket, data.data());
+        // printf("The rest on readBuffers[%d]:%s\n", clientSocket, readBuffers[clientSocket].data());
 
         dataJSON = json::parse(data);
         return true;        
@@ -479,7 +520,7 @@ int writeToSocket(int clientSocket, std::map<int, std::string> &writeBuffers, in
     }
 
     // Debug info
-    printf("Message sent to client on descriptor:%d:%s\n", clientSocket, message.substr(0, returnValue).data());
+    // printf("Message sent to client on descriptor:%d:%s\n", clientSocket, message.substr(0, returnValue).data());
 
     message = message.substr(returnValue);
     writeBuffers[clientSocket] = message;
@@ -533,7 +574,7 @@ int disconnectClient(int clientSocket, std::vector<int> &clients, int &clientsCo
     }
 
     // Debug info
-    printf("Client on descriptor:%d has disconnected\n", clientSocket);
+    // printf("Client on descriptor:%d has disconnected\n", clientSocket);
     return 0;
 }
 
@@ -562,7 +603,7 @@ int connectNewClient(int serverSocket, std::vector<int> &clients, int &clientsCo
     }
 
     // Debug info
-    printf("Client on descriptor:%d has connected\n", clientSocket);
+    // printf("Client on descriptor:%d has connected\n", clientSocket);
     return 0;
 }
 
