@@ -134,7 +134,7 @@ private:
         }
 
         // Debug info
-        printf("Client on descriptor:%d has connected\n", clientSocket);
+        // printf("Client on descriptor:%d has connected\n", clientSocket);
         return clientSocket;
     }
     int disconnectClient(int clientSocket){
@@ -170,7 +170,7 @@ private:
         }
 
         // Debug info
-        printf("Client on descriptor:%d has disconnected\n", clientSocket);
+        // printf("Client on descriptor:%d has disconnected\n", clientSocket);
         return 0;
     }
     std::string readFromSocket(int clientSocket){
@@ -254,7 +254,7 @@ private:
     }
     int setupWriteBuffer(json &JSON, int clientSocket){
         // Debug info
-        printf("send to %d: %s\n", clientSocket, JSON.dump().data());
+        // printf("send to %d: %s\n", clientSocket, JSON.dump().data());
         if(writeBuffers[clientSocket] == ""){
             epoll_event ee;
             ee.events = EPOLLIN | EPOLLOUT;
@@ -274,7 +274,7 @@ private:
     }
     int setupAllWriteBuffers(json &JSON){
         // Debug info
-        printf("send to All: %s\n", JSON.dump().data());
+        // printf("send to All: %s\n", JSON.dump().data());
         for(const int &client : clients){
             if(names[client] == "") continue;
             std::string typ = JSON["type"];
@@ -515,7 +515,7 @@ private:
     }
     int manageMessage(int clientSocket, json &dataJSON){
         // Debug info
-        printf("Json object in data:%s\n", dataJSON.dump().data());
+        // printf("Json object in data:%s\n", dataJSON.dump().data());
 
         if(!dataJSON.contains("type")){
             fprintf(stderr, "Invalid data was received");
