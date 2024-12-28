@@ -446,6 +446,9 @@ void MainWindow::summaryEnd(){
     message += "$";
     socket->write(message.c_str());
 
+    // Debug info
+    // ui->serwerMessages->append("<b>round message</b>");
+
 }
 
 void MainWindow::dissconnectfromSerwer(){
