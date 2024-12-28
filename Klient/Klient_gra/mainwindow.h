@@ -33,6 +33,7 @@ protected:
     QTcpSocket* socket;
     QTimer *connTimeoutTimer = new QTimer(this);
     QTimer *timer = new QTimer(this);
+    QTimer *timer2 = new QTimer(this);
 
     // Variable used for receiving data from serwer
     std::string readBuffer = "";
@@ -44,6 +45,9 @@ protected:
     bool ifPlaying;
     int minutes;
     int seconds;
+    int minPlayers;
+    int roundTime;
+    int roundStartDelay;
     std::string letter;
     time_t roundStartTime;
 
@@ -59,6 +63,8 @@ protected:
 
     bool checkIfMessageReady(json &dataJSON);
     void timeChange();
+    void summaryEnd();
+    void dissconnectfromSerwer();
 private:
     Ui::MainWindow *ui;
 };

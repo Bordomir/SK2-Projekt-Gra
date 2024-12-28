@@ -19,18 +19,23 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     connTimeoutTimer->setSingleShot(true);
     timer->setInterval(1000);
+    timer2->setSingleShot(true);
 
     playerCount = 0;
     playerAnswers = 0;
     ifPlaying = false;
     minutes = 0;
     seconds = 0;
+    minPlayers = 99;
+    roundTime = 99;
     letter = "";
     roundStartTime = 0;
+    roundStartDelay = 10000;
 
     connect(timer, &QTimer::timeout, this, &MainWindow::timeChange);
+    connect(timer2, &QTimer::timeout, this, &MainWindow::summaryEnd);
     connect(ui->connectButton, &QPushButton::clicked, this, &MainWindow::connectBtnHit);
-    connect(ui->disconnectButton, &QPushButton::clicked, this, &MainWindow::socketDisconnected);
+    connect(ui->disconnectButton, &QPushButton::clicked, this, &MainWindow::dissconnectfromSerwer);
     connect(ui->joinButton, &QPushButton::clicked, this, &MainWindow::joinBtnHit);
     connect(ui->sendButton, &QPushButton::clicked, this, &MainWindow::sendBtnHit);
 }
@@ -71,13 +76,27 @@ void MainWindow::socketDisconnected(){
     ui->disconnectButton->setEnabled(false);
     ui->joinBox->setEnabled(false);
     ui->gameBox->setEnabled(false);
+    if(timer->isActive()) timer->stop();
+    if(timer2->isActive()) timer2->stop();
     playerCount = 0;
     playerAnswers = 0;
     ifPlaying = false;
     minutes = 0;
     seconds = 0;
+    minPlayers = 99;
+    roundTime = 99;
     letter = "";
     roundStartTime = 0;
+    roundStartDelay = 10000;
+    ui->allPlayersLine->setText(QString(""));
+    ui->requiredPlayersLine->setText(QString(""));
+    ui->currentPlayersLine->setText(QString(""));
+    ui->letterLine->setText(QString(""));
+    ui->timeLine->setText(QString(""));
+    for(int i = 0; i < 6; i++){
+        QTableWidgetItem item;
+        ui->playerAnswersTable->setItem(0,i, &item);
+    }
 }
 
 void MainWindow::socketError(){
@@ -103,7 +122,19 @@ void MainWindow::socketDataRec(){
             continue;
         }
 
-        if(dataJSON["type"] == "nameRepeated"){
+        if(dataJSON["type"] == "config"){
+            // Serwer sends config
+            if(!dataJSON.contains("min")
+                || !dataJSON.contains("time")
+                || !dataJSON.contains("delay")){
+                fprintf(stderr, "Invalid data was received");
+                continue;
+            }
+            minPlayers = dataJSON["min"];
+            roundTime = dataJSON["time"];
+            roundStartDelay = dataJSON["delay"];
+
+        }else if(dataJSON["type"] == "nameRepeated"){
             // Player name was already in use
             ui->serwerMessages->append("<b>Podana nazwa gracza jest już używana</b>");
 
@@ -125,37 +156,32 @@ void MainWindow::socketDataRec(){
                 fprintf(stderr, "Invalid data was received");
                 continue;
             }
-            int all = dataJSON["players"];
+            playerCount = dataJSON["players"];
             int req = dataJSON["requirement"];
             playerAnswers = dataJSON["answers"];
             letter = dataJSON["letter"];
-            ui->allPlayersLine->setText(QString::number(all));
+            ui->allPlayersLine->setText(QString::number(playerCount));
             ui->requiredPlayersLine->setText(QString::number(req));
             ui->currentPlayersLine->setText(QString::number(playerAnswers));
             ui->letterLine->setText(QString::fromStdString(letter));
 
-
-            ui->playersPointsTable->clearContents();
-            ui->playersPointsTable->setEnabled(true);
-            for(int i = 0; i < all; i++){
+            ui->playersPointsTable->setRowCount(0);
+            for(int i = 0; i < playerCount; i++){
                 ui->playersPointsTable->insertRow(i);
-                QTableWidgetItem nameItem;
-                QTableWidgetItem pointsItem;
-                QTableWidgetItem averageItem;
                 std::string name = dataJSON["names"][i];
                 int points = dataJSON["points"][i];
-                double average = (double)points/(double)dataJSON["rounds"][i];
-                nameItem.setText(QString::fromStdString(name));
-                pointsItem.setText(QString::number(points));
-                averageItem.setText(QString::number(average));
-                ui->playersPointsTable->setItem(i,0, &nameItem);
-                ui->playersPointsTable->setItem(i,1, &pointsItem);
-                ui->playersPointsTable->setItem(i,2, &averageItem);
+                int rounds = dataJSON["rounds"][i];
+                double average = 0;
+                if(rounds != 0){
+                    average = (double)points/(double)rounds;
+                }
+                ui->playersPointsTable->setItem(i,0, new QTableWidgetItem(QString::fromStdString(name)));
+                ui->playersPointsTable->setItem(i,1, new QTableWidgetItem(QString::number(points)));
+                ui->playersPointsTable->setItem(i,2, new QTableWidgetItem(QString::number(average)));
             }
-            // ui->playersPointsTable->setEnabled(false);
 
             roundStartTime = dataJSON["time"];
-            minutes = ROUND_TIME;
+            minutes = roundTime;
             seconds = 0;
             if(!ifPlaying){
                 time_t curr = time(NULL);
@@ -170,33 +196,40 @@ void MainWindow::socketDataRec(){
                     seconds = 60-sec1;
                 }
             }
-            ui->timeLine->setText(QString::number(minutes) + ":" + QString::number(seconds));
-            timer->start();
+            if(minutes < 0){
+                ui->timeLine->setText(QString("0:0"));
+            }else{
+                ui->timeLine->setText(QString::number(minutes) + ":" + QString::number(seconds));
+                timer->start();
+            }
 
         }else if(dataJSON["type"] == "newPlayer"){
             // New player has connected
-            if(!dataJSON.contains("name")){
+            if(!dataJSON.contains("name")
+                || !dataJSON.contains("players")){
                 fprintf(stderr, "Invalid data was received");
                 continue;
             }
-            playerCount++;
+            playerCount = dataJSON["players"];
             ui->allPlayersLine->setText(QString::number(playerCount));
             std::string name = dataJSON["name"];
-            if(playerCount < MIN_PLAYER_NUMBER){
+            if(playerCount < minPlayers){
                 ui->serwerMessages->append("<b>Gracz o nazwie " + QString::fromStdString(name)
-                                           + " dołączył ale nadal brakuje " + QString::number(MIN_PLAYER_NUMBER-playerCount) + " graczy do rozpoczęcia następnej rundy</b>");
-            }else if(playerCount == MIN_PLAYER_NUMBER){
+                                           + " dołączył ale nadal brakuje " + QString::number(minPlayers-playerCount) + " graczy do rozpoczęcia następnej rundy</b>");
+            }else if(playerCount == minPlayers){
                 ui->serwerMessages->append("<b>Gracz o nazwie " + QString::fromStdString(name) + " dołączył i następna runda się rozpocznie</b>");
             }else{
                 ui->serwerMessages->append("<b>Gracz o nazwie " + QString::fromStdString(name) + " dołączy do gry w następnej rundzie</b>");
             }
 
         }else if(dataJSON["type"] == "start"){
+            // Round starts
+            if(timer2->isActive()) timer2->stop();
+
             ui->gameBox->setEnabled(true);
             for(int i = 0; i < 6; i++){
                 QTableWidgetItem item;
-                item.setText(QString());
-                ui->playerAnswersTable->setItem(0,i,&item);
+                ui->playerAnswersTable->setItem(0,i, &item);
             }
 
             ui->serwerMessages->append("<b>Runda się rozpoczyna</b>");
@@ -234,34 +267,46 @@ void MainWindow::socketDataRec(){
             std::string imie = dataJSON["imie"];
             int points = dataJSON["points"];
 
-            ui->serwerMessages->append("<b>Gracz o nazwie " + QString::fromStdString(name) + " zdobył "
-                                        + QString::number(points) + " punktów za odpowiedzi:["
-                                        + QString::fromStdString(panstwo) + ", "
-                                        + QString::fromStdString(miasto) + ", "
-                                        + QString::fromStdString(rzecz) + ", "
-                                        + QString::fromStdString(roslina) + ", "
-                                        + QString::fromStdString(zwierze) + ", "
-                                        + QString::fromStdString(imie) + "]</b>");
+            ui->serwerMessages->append("<b>Gracz o nazwie " + QString::fromStdString(name) + " zdobył " + QString::number(points) + " punktów za odpowiedzi:</b>");
+            ui->serwerMessages->append("<b>państwo:" + QString::fromStdString(panstwo) + ",</b>");
+            ui->serwerMessages->append("<b>miasto:" + QString::fromStdString(miasto) + ",</b>");
+            ui->serwerMessages->append("<b>rzecz:" + QString::fromStdString(rzecz) + ",</b>");
+            ui->serwerMessages->append("<b>roślina" + QString::fromStdString(roslina) + ",</b>");
+            ui->serwerMessages->append("<b>zwierzę:" + QString::fromStdString(zwierze) + ",</b>");
+            ui->serwerMessages->append("<b>imie:" + QString::fromStdString(imie) + "</b>");
 
         }else if(dataJSON["type"] == "end"){
+            // Round end
             ui->gameBox->setEnabled(false);
             ui->serwerMessages->append("<b>Runda się zakończyła</b>");
-            timer->stop();
+            if(timer->isActive()) timer->stop();
+            ui->requiredPlayersLine->setText(QString(""));
+            ui->currentPlayersLine->setText(QString(""));
+            ui->letterLine->setText(QString(""));
+            ui->timeLine->setText(QString(""));
+
+        }else if(dataJSON["type"] == "sleep"){
+            // Wait for another round
+            timer2->start(roundStartDelay);
 
         }else if(dataJSON["type"] == "disconnected"){
-            if(!dataJSON.contains("name") || !dataJSON.contains("answers")){
+            // Player has disconnected
+            if(!dataJSON.contains("name")
+                || !dataJSON.contains("answers")
+                || !dataJSON.contains("players")){
                 fprintf(stderr, "Invalid data was received");
                 continue;
             }
-            // Player has disconnected and there is still enough players to run game
-            playerCount--;
+            std::string name = dataJSON["name"];
+            if(name == "") continue;
+
+            playerCount = dataJSON["players"];
             ui->allPlayersLine->setText(QString::number(playerCount));
             playerAnswers = dataJSON["answers"];
-            ui->requiredPlayersLine->setText(QString::number(playerAnswers));
-            std::string name = dataJSON["name"];
-            if(playerCount < MIN_PLAYER_NUMBER){
+            ui->currentPlayersLine->setText(QString::number(playerAnswers));
+            if(playerCount < minPlayers){
                 ui->serwerMessages->append("<b>Gracz o nazwie " + QString::fromStdString(name) + " się rozłączył i brakuje "
-                                           + QString::number(MIN_PLAYER_NUMBER-playerCount) + " graczy do rozpoczęcia następnej rundy</b>");
+                                           + QString::number(minPlayers-playerCount) + " graczy do rozpoczęcia następnej rundy</b>");
             }else{
                 ui->serwerMessages->append("<b>Gracz o nazwie " + QString::fromStdString(name) + " się rozłączył</b>");
             }
@@ -326,7 +371,7 @@ void MainWindow::sendBtnHit(){
             dataJSON[categories[i]] = "";
             continue;
         }
-        std::string answer = Qanswer.toStdString();
+        std::string answer = Qanswer.toLower().toStdString();
         int pos = answer.find("$");
         if(pos > -1){
             answer = "";
@@ -388,6 +433,21 @@ void MainWindow::timeChange(){
         ui->gameBox->setEnabled(false);
 
         timer->stop();
-        ui->serwerMessages->append("<b>Czas się skończył</b>");
     }
+}
+
+void MainWindow::summaryEnd(){
+    timer2->stop();
+    json dataJSON;
+    dataJSON["type"] = "round";
+    dataJSON["time"] = roundStartTime;
+    std::string message = "";
+    message += dataJSON.dump().data();
+    message += "$";
+    socket->write(message.c_str());
+
+}
+
+void MainWindow::dissconnectfromSerwer(){
+    socket->disconnectFromHost();
 }
