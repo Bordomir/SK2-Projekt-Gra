@@ -48,6 +48,7 @@ private:
     time_t roundStartTime;
     int roundEndRequirement;
     int submitedAnswers;
+    std::vector<int> playersWatchingSummary;
     
     // Methods
     int createSerwer(int port, int listening){
@@ -350,6 +351,7 @@ private:
         firstPlayer = 0;
         setAllPlayers();
         setEmptyAnswers();
+        playersWatchingSummary.clear();
 
         json message = R"({
             "type": "start"
@@ -419,6 +421,12 @@ private:
 
             if(answers[client]["time"] == 0) continue;
             points[client] += calculatePoints(client);
+        }
+
+        for(const int &client : clients){
+            if(names[client] == "") continue;
+            if(!ifPlaying[client]) continue;
+            playersWatchingSummary.push_back(client);
         }
 
         message = R"({
@@ -500,6 +508,18 @@ private:
         // Check if all players has disconnected
         if(playerCount == 0){
             clearGameData();
+        }
+
+        playersWatchingSummary.erase(std::remove(playersWatchingSummary.begin(), playersWatchingSummary.end(), clientSocket), playersWatchingSummary.end());
+
+        if(playersWatchingSummary.empty()){
+            // Check if round can be started
+            if(playerCount >= MIN_PLAYER_NUMBER){
+                returnValue = startRound();
+                if(returnValue < 0) return -1;
+            }else{
+                ifGameRunning = false;
+            }
         }
 
         return 0; 

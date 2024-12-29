@@ -11,10 +11,6 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 
 cmake_policy(SET CMP0135 NEW)
 
-# set(PROJECT_SOURCES
-#         serwer.cpp
-#         config.hpp
-# )
 set(PROJECT_SOURCES
         gameSerwer.cpp
         config.hpp

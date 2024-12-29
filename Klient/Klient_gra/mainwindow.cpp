@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include "nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 
@@ -288,6 +288,7 @@ void MainWindow::socketDataRec(){
         }else if(dataJSON["type"] == "sleep"){
             // Wait for another round
             timer2->start(roundStartDelay);
+            ui->serwerMessages->append("<b>Jeżeli to możliwe następna runda rozpocznie się za 10 sekund</b>");
 
         }else if(dataJSON["type"] == "disconnected"){
             // Player has disconnected

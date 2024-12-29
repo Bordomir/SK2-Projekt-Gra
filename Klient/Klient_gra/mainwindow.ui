@@ -205,7 +205,7 @@
    </widget>
    <widget class="QTextBrowser" name="serwerMessages">
     <property name="enabled">
-     <bool>false</bool>
+     <bool>true</bool>
     </property>
     <property name="geometry">
      <rect>
@@ -434,7 +434,7 @@
    </widget>
    <widget class="QTableWidget" name="playersPointsTable">
     <property name="enabled">
-     <bool>false</bool>
+     <bool>true</bool>
     </property>
     <property name="geometry">
      <rect>
@@ -452,6 +452,9 @@
     </property>
     <property name="horizontalScrollBarPolicy">
      <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+    </property>
+    <property name="editTriggers">
+     <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
     </property>
     <attribute name="horizontalHeaderMinimumSectionSize">
      <number>14</number>

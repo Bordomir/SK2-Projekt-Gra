@@ -30,7 +30,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(Klient_gra
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        config.h
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET Klient_gra APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -72,6 +71,16 @@ install(TARGETS Klient_gra
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+# Generate the deployment script for the target Klient_gra.
+qt_generate_deploy_app_script(
+    TARGET Klient_gra
+    FILENAME_VARIABLE deploy_script
+    NO_UNSUPPORTED_PLATFORM_ERROR
+)
+
+# Call the deployment script on "cmake --install".
+install(SCRIPT ${deploy_script})
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(Klient_gra)
